@@ -1,5 +1,6 @@
-# Author: Raul Cruz-Oliver, rcruzoliver@student.ethz.ch
-# Date, place : August 2023, Zurich
+# Author: Raul Cruz-Oliver
+# Email: raul.cruz.oliver@gmail.com
+# Date, place: January 2023, Butikkon, CH
 
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -16,41 +17,41 @@ def static_transform(parent, child, position):
         )
 
 def generate_launch_description():
-    # Define launch arguments
-    urdf_file = os.path.join(get_package_share_directory('kr_rviz_demo'), 'urdf', 'kr2_robot_a810_tio_fixed.urdf')
-    # botaSensor_position = ['0.070','-0.025','0.020']
-    # accelerometer_position = ['0.050','-0.025','0.070']
-    # nozzle_position = ['0','-0.025','-0.057']
+
+    urdf_file = os.path.join(get_package_share_directory('kr_rviz_demo'), 'urdf', 'kr2_robot_a810_tio.urdf')
     
-    return LaunchDescription([
-        DeclareLaunchArgument('use_sim_time', default_value='false',
-                              description='Use simulation/Gazebo clock if true'),
-        Node(
+    robot_state_publisher = Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
             parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time')}],
-            arguments=[urdf_file]
-        ),
-        
-        Node(
+            arguments=[urdf_file])
+    
+    kr_state_publisher_node = Node(
             package='kr_rviz_demo',          
-            executable='state_publisher',
-            name='state_publisher',
-            arguments=["demo"],  
-            output='screen',
-        ),
-
-        # static_transform('printhead', 'botaSensor', botaSensor_position),
-        # static_transform('printhead', 'accelerometer', accelerometer_position),
-        # static_transform('printhead', 'nozzle', nozzle_position),
-
-        Node(
+            executable='kr_state_publisher',
+            name='kr_state_publisher',
+            output='screen')
+    
+    kr_state_manager_node = Node(
+            package='kr_rviz_demo',          
+            executable='kr_state_manager',
+            name='kr_state_manager',
+            arguments=["jog_demo"],  
+            output='screen')
+    
+    rviz_node = Node(
             package="rviz2",
             executable="rviz2",
             name="rviz2",
             output="screen",
-            arguments=["-d", os.path.join(get_package_share_directory("kr_rviz_demo"), "rviz", "kr_rviz_demo.rviz")]
-        )
-    ])
+            arguments=["-d", os.path.join(get_package_share_directory("kr_rviz_demo"), "rviz", "kr_rviz_demo.rviz")])
+
+    return LaunchDescription([
+        DeclareLaunchArgument('use_sim_time', default_value='false', description='Use simulation/Gazebo clock if true'),    
+        robot_state_publisher,
+        kr_state_publisher_node,
+        kr_state_manager_node, 
+        rviz_node
+        ])
